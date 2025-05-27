@@ -4,80 +4,60 @@ namespace App\Http\Controllers;
 
 use App\Models\Crud;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class taskcontroller extends Controller
 {
-    public function show(){
-
-        $users = DB::table('crud_operation')->get(); 
-    // return view('welcome', ['names' => $users]);
-
-       return view('welcome', compact('users'));
+    public function show()
+    {
+        $users = Crud::all(); 
+        return view('welcome', compact('users'));
     }
 
- 
-public function edit($id) {
-   
-    $user = DB::table('crud_operation')->where('id', $id)->first();
+    public function edit($id)
+    {
+        $user = Crud::findOrFail($id); 
+        return view('edit', compact('user'));
+    }
 
-
-    return view('edit', compact('user'));
-}
-
-
-public function update(Request $request, $id) {
-
-    $request->validate([
-        'name' => 'required',
-        'email' => 'required|email',
-    ]);
-
-   
-    DB::table('crud_operation')->where('id', $id)->update([
-        'name' => $request->input('name'),
-        'email' => $request->input('email'),
-    ]);
-
-    return redirect('/')->with('success', 'User updated successfully!');
-}
-
- public function store(Request $request){
-      
+    public function update(Request $request, $id)
+    {
         $request->validate([
-            'name' => 'required|max:255',
-            'email' => 'required|email|max:255|unique:crud_operation',
+            'name'  => 'required',
+            'email' => 'required|email',
         ]);
 
-        $userId = DB::table('crud_operation')->insertGetId([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
+        $user = Crud::findOrFail($id);
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->save();
 
-     
-        $user = DB::table('crud_operation')->where('id', $userId)->first();
-
-     
-        return response()->json($user);
+        return redirect('/')->with('success', 'User updated successfully!');
     }
 
-    
-  public function delete($id)
-{
-   
-    $deleted = DB::table('crud_operation')->where('id', $id)->delete();
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name'  => 'required|max:255',
+            'email' => 'required|email|max:255|unique:crud_operation,email',
+        ]);
 
- 
-    if ($deleted) {
-        return redirect('/')->with('success', 'User deleted successfully');
-    } else {
+        $user = new Crud;
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->save();
+
+        return response()->json($user); 
+    }
+
+    public function delete($id)
+    {
+        $user = Crud::find($id);
+
+        if ($user) {
+            $user->delete();
+            return redirect('/')->with('success', 'User deleted successfully');
+        }
+
         return redirect('/')->with('error', 'Error deleting user');
     }
 }
-
-}
-
-
-
-
-    
